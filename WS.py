@@ -5,9 +5,12 @@ from flask_socketio import SocketIO
 import Twitch
 
 app = Flask(__name__)
-#app.config['SECRET_KEY'] = 'secret!'
 sio = SocketIO(app, always_connect=True)
 Twitch.setSOClient(sio)
+
+@sio.on("info")
+def info(data):
+    Twitch.sendMessage(data)
 
 @sio.on('response')
 def response(data):
