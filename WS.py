@@ -9,7 +9,7 @@ sio = SocketIO(app, always_connect=True)
 Twitch.setSOClient(sio)
 
 @sio.on("info")
-def info(data):
+def response(data):
     Twitch.sendMessage(data)
 
 @sio.on('response')
@@ -22,8 +22,11 @@ def handshake(data):
         Twitch.setTinderClient(request.sid)
     elif (data == "leds"):
         Twitch.setLedsClient(request.sid)
+    elif (data == "spotify"):
+        Twitch.setSpotifyClient(request.sid)
     else:
-        print("Error")
+        print("Handshake incorrecto con cliente")
+
 
 @sio.on("connect")
 def connect():
@@ -31,7 +34,7 @@ def connect():
 
 @sio.on("disconnect")
 def disconnect():
-    sio.emit("handshake","")
+    print("Se desconecto un cliente")
 
 def startWebServer():
     sio.run(app, port=5000)

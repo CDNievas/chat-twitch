@@ -14,6 +14,7 @@ CHANNEL = None
 
 tinderSckt = None
 ledsSckt = None
+spotifySckt = None
 sio = None
 
 def startTwitchChat():
@@ -36,6 +37,10 @@ def setTinderClient(sckt):
     global tinderSckt
     tinderSckt = sckt
 
+def setSpotifyClient(sckt):
+    global spotifySckt
+    spotifySckt = sckt
+
 def sendMessage(msg):
     s.send("PRIVMSG {} :{}\r\n".format(CHANNEL, msg).encode("utf-8"))
 
@@ -48,11 +53,10 @@ def connect(server,port,auth,channel,username):
     s.send("NICK {}\n".format(username).encode('utf-8'))
     s.send("JOIN {}\n".format(channel).encode('utf-8'))
 
-    print("Sucessfully connected to Twitch")
+    print("Conectado al chat de Twitch correctamente")
 
     while True:
         resp = s.recv(4096).decode('utf-8')
-        print(resp)
         msgs = [_parseMessage(line)
                 for line in filter(None, resp.split('\r\n'))]
         msgs = [r for r in msgs if r]
@@ -63,9 +67,9 @@ def connect(server,port,auth,channel,username):
 def _parseCommand(msg):
     global tinderSckt, ledsSckt
     message = msg["message"].lower()
-    username = msg["username"]
+    user = msg["username"]
 
-    if username == "nightbot":
+    if user == "nightbot":
         return
 
     if "!leds " in message:
@@ -78,21 +82,34 @@ def _parseCommand(msg):
 
         comm = {}
         comm["color"] = color
-        comm["user"] = username
+        comm["user"] = user
 
         sio.emit("message",comm,to=ledsSckt)
        
     elif "!tinder" in message:
         
         comm = {}
-        comm["user"] = username
+        comm["user"] = user
         sio.emit("message",comm,to=tinderSckt)
+
+    elif "!song" in message:
+
+        comm = {}
+        comm["user"] = user
+        sio.emit("actualSong",comm,to=spotifySckt)
+
+    elif "!playlist" in message:
+
+        comm = {}
+        comm["user"] = user
+        sio.emit("playlist",comm,to=spotifySckt)
+    
 
 def _parseMessage(data):
 
     if _check_has_ping(data):
         s.send("PONG\r\n".encode("utf-8"))
-        print("Pong sent")
+        print("Pong enviado")
 
     if _check_has_channel(data):
         CHANNEL = \
